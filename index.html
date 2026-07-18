@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分析室 — SNS運用分析ハブ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho+B1:wght@600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --paper:#F3F4F0; --card:#FFFFFF; --ink:#22262F; --sub:#6E7482;
+  --line:#DCDED6; --marker:#FFE14D; --buzz:#3B6EA5; --sell:#D0563C;
+  --ok:#3E7C4F; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;line-height:1.7}
+.mk{background:linear-gradient(transparent 55%,var(--marker) 55%,var(--marker) 92%,transparent 92%);padding:0 .15em}
+header{padding:22px 20px 0;max-width:1080px;margin:0 auto}
+.wordmark{font-family:'Shippori Mincho B1',serif;font-weight:800;font-size:26px;letter-spacing:.06em}
+.wordmark small{font-family:'Zen Kaku Gothic New';font-weight:500;font-size:12px;color:var(--sub);letter-spacing:.12em;margin-left:12px}
+nav{display:flex;gap:4px;margin-top:16px;border-bottom:2px solid var(--ink);overflow-x:auto}
+nav button{font-family:inherit;font-size:14px;font-weight:700;background:none;border:none;padding:9px 16px;cursor:pointer;color:var(--sub);white-space:nowrap}
+nav button.on{color:var(--ink);background:linear-gradient(transparent 60%,var(--marker) 60%)}
+nav button:focus-visible{outline:2px solid var(--buzz);outline-offset:-2px}
+main{max-width:1080px;margin:0 auto;padding:24px 20px 80px}
+.page{display:none}.page.on{display:block}
+h2{font-family:'Shippori Mincho B1',serif;font-size:19px;margin:26px 0 12px}
+h2:first-child{margin-top:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:14px}
+.grid{display:grid;gap:14px}
+@media(min-width:760px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}}
+.kpi .num{font-family:var(--mono);font-size:30px;font-weight:500}
+.kpi .lbl{font-size:12px;color:var(--sub);letter-spacing:.08em}
+textarea{width:100%;min-height:220px;font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:12px;background:#FBFBF8;resize:vertical}
+input[type=text]{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#FBFBF8;width:100%}
+.btn{font-family:inherit;font-size:14px;font-weight:700;border:2px solid var(--ink);background:var(--ink);color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.sm{font-size:12px;padding:5px 12px;border-width:1.5px}
+.btn:focus-visible{outline:2px solid var(--buzz);outline-offset:2px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:11.5px;color:var(--sub);letter-spacing:.06em;border-bottom:2px solid var(--ink);padding:6px 8px}
+td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:1px 7px;margin:1px 2px;background:#ECEDE7;color:var(--ink)}
+.tag.buzz{background:#E2EAF3;color:var(--buzz)}.tag.sell{background:#F6E3DD;color:var(--sell)}
+.tag.untap{background:var(--marker)}
+.mono{font-family:var(--mono);font-size:12.5px}
+.sub{color:var(--sub);font-size:13px}
+.msg{font-size:13px;font-weight:700;margin-top:10px;min-height:1.4em}
+.msg.err{color:var(--sell)}.msg.ok{color:var(--ok)}
+.pattern{border-left:4px solid var(--buzz);padding-left:14px;margin-bottom:16px}
+.pattern.sell{border-color:var(--sell)}
+.pattern h3{font-size:15.5px;margin-bottom:4px}
+.recipe{background:#FBFBF8;border:1px dashed var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px;margin-top:8px}
+.prop{position:relative}
+.prop h3{font-size:15.5px;margin-bottom:6px;padding-right:70px}
+.hookbox{background:#FBFBF8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px;margin:8px 0}
+.copybtn{position:absolute;top:16px;right:16px}
+.runrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+.empty{color:var(--sub);text-align:center;padding:40px 0;font-size:14px}
+canvas{max-height:300px}
+ol.steps{padding-left:1.3em;font-size:13.5px}
+ol.steps li{margin-bottom:4px}
+select{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#FBFBF8}
+@media(prefers-reduced-motion:no-preference){.page.on{animation:fade .18s ease}}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wordmark">分析室<small>THREADS × NOTE ANALYSIS HUB</small></div>
+  <nav id="nav"></nav>
+</header>
+<main>
+
+<!-- ================= 取込 ================= -->
+<section class="page" id="pg-import">
+  <div class="card">
+    <h2>使い方</h2>
+    <ol class="steps">
+      <li>スプレッドシートのメニュー「🧠 分析システム」→「分析パックを生成」</li>
+      <li>『分析パック』シートのA列を全コピー → Claudeのチャットに貼る</li>
+      <li>返ってきたJSONを下に貼り付けて「取り込む」</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>分析結果を取り込む</h2>
+    <div style="margin-bottom:10px"><input type="text" id="accName" placeholder="アカウント名(例: あやか)"></div>
+    <textarea id="jsonIn" placeholder='Claudeが出力したJSONをそのまま貼り付け(```付きでもOK)'></textarea>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="importRun()">取り込む</button>
+      <button class="btn ghost" onclick="exportAll()">全データをバックアップ</button>
+      <button class="btn ghost" onclick="document.getElementById('restoreFile').click()">バックアップを復元</button>
+      <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreAll(event)">
+    </div>
+    <div class="msg" id="importMsg"></div>
+  </div>
+  <div class="card">
+    <h2>取込履歴</h2>
+    <div id="runList"></div>
+  </div>
+</section>
+
+<!-- ================= ダッシュボード ================= -->
+<section class="page" id="pg-dash">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+    <h2 style="margin:0">全体サマリー</h2>
+    <select id="runSel" onchange="setActiveRun(this.value)"></select>
+  </div>
+  <div id="dashBody"></div>
+</section>
+
+<!-- ================= バズ分析 ================= -->
+<section class="page" id="pg-buzz">
+  <div id="buzzBody"></div>
+</section>
+
+<!-- ================= 売れ分析 ================= -->
+<section class="page" id="pg-sell">
+  <div id="sellBody"></div>
+</section>
+
+<!-- ================= 未開拓マップ ================= -->
+<section class="page" id="pg-map">
+  <div id="mapBody"></div>
+</section>
+
+<!-- ================= 提案 ================= -->
+<section class="page" id="pg-prop">
+  <div id="propBody"></div>
+</section>
+
+</main>
+<script>
+'use strict';
+/* ---------- 状態 ---------- */
+const KEY='sns_analysis_runs_v1';
+let runs=[]; let activeIdx=-1; let charts={};
+try{runs=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){runs=[]}
+if(runs.length)activeIdx=runs.length-1;
+
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(runs))}catch(e){alert('保存容量の上限です。古い取込を削除してください。')}};
+const cur=()=>activeIdx>=0?runs[activeIdx]:null;
+
+/* ---------- ナビ ---------- */
+const PAGES=[['import','取込'],['dash','ダッシュボード'],['buzz','バズ分析'],['sell','売れ分析'],['map','未開拓マップ'],['prop','提案']];
+const nav=document.getElementById('nav');
+PAGES.forEach(([id,label])=>{
+  const b=document.createElement('button');b.textContent=label;b.dataset.pg=id;
+  b.onclick=()=>show(id);nav.appendChild(b);
+});
+function show(id){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.pg===id));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='pg-'+id));
+  render(id);
+}
+
+/* ---------- 取込 ---------- */
+function importRun(){
+  const msg=document.getElementById('importMsg');
+  let raw=document.getElementById('jsonIn').value.trim();
+  raw=raw.replace(/^```(?:json)?/m,'').replace(/```\s*$/m,'').trim();
+  const s=raw.indexOf('{'),e=raw.lastIndexOf('}');
+  if(s<0||e<0){msg.textContent='JSONが見つかりません。';msg.className='msg err';return}
+  let data;
+  try{data=JSON.parse(raw.substring(s,e+1))}
+  catch(err){msg.textContent='JSONの解析に失敗: '+err.message;msg.className='msg err';return}
+  if(!Array.isArray(data.posts)){msg.textContent='posts配列がありません。出力フォーマットを確認してください。';msg.className='msg err';return}
+  runs.push({
+    account:document.getElementById('accName').value.trim()||'未設定',
+    imported:new Date().toISOString().slice(0,10),
+    data:data
+  });
+  activeIdx=runs.length-1;save();
+  document.getElementById('jsonIn').value='';
+  msg.textContent='取り込みました(投稿 '+data.posts.length+'件 / 提案 '+(data.proposals?.length||0)+'案)。';
+  msg.className='msg ok';
+  renderRunList();
+}
+function delRun(i){
+  if(!confirm('この取込を削除しますか?'))return;
+  runs.splice(i,1);if(activeIdx>=runs.length)activeIdx=runs.length-1;save();renderRunList();
+}
+function exportAll(){
+  const blob=new Blob([JSON.stringify(runs,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='分析室バックアップ_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function restoreAll(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){runs=d;activeIdx=runs.length-1;save();renderRunList();
+    document.getElementById('importMsg').textContent='復元しました('+runs.length+'件)。';
+    document.getElementById('importMsg').className='msg ok';}}catch(e){alert('復元失敗: '+e.message)}};
+  r.readAsText(f);
+}
+function renderRunList(){
+  const el=document.getElementById('runList');
+  if(!runs.length){el.innerHTML='<div class="empty">まだ取込がありません</div>';return}
+  el.innerHTML=runs.map((r,i)=>
+    '<div class="runrow"><span class="mono">'+esc(r.imported)+'</span>'+
+    '<b>'+esc(r.account)+'</b><span class="sub">投稿'+(r.data.posts?.length||0)+'件</span>'+
+    (i===activeIdx?'<span class="tag untap">表示中</span>':'')+
+    '<span style="flex:1"></span>'+
+    '<button class="btn sm ghost" onclick="setActiveRun('+i+')">表示</button>'+
+    '<button class="btn sm ghost" onclick="delRun('+i+')">削除</button></div>'
+  ).join('');
+}
+function setActiveRun(i){activeIdx=Number(i);renderRunList();show('dash')}
+
+/* ---------- 描画 ---------- */
+function needData(el){el.innerHTML='<div class="card"><div class="empty">データがありません。「取込」タブからClaudeの分析JSONを取り込んでください。</div></div>';}
+function killChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+function makeChart(id,cfg){
+  if(typeof Chart==='undefined')return;
+  killChart(id);const c=document.getElementById(id);if(c)charts[id]=new Chart(c,cfg);
+}
+
+function render(pg){
+  if(pg==='import')return renderRunList();
+  const r=cur();
+  if(pg==='dash'){
+    const sel=document.getElementById('runSel');
+    sel.innerHTML=runs.map((x,i)=>'<option value="'+i+'"'+(i===activeIdx?' selected':'')+'>'+esc(x.imported+' '+x.account)+'</option>').join('');
+    const el=document.getElementById('dashBody');
+    if(!r)return needData(el);
+    const d=r.data,posts=d.posts||[];
+    const untap=(d.category_matrix||[]).filter(c=>c.untapped).length;
+    el.innerHTML='<div class="grid g3">'+
+      kpi(posts.length,'分析済み投稿')+
+      kpi((d.buzz_patterns||[]).length,'勝ちパターン')+
+      kpi('<span class="mk">'+untap+'</span>','未開拓カテゴリ')+
+      '</div>'+
+      '<h2>直近の分析ハイライト</h2><div class="card">'+
+      (d.sell_analysis?.summary?'<p><b>売れの結論:</b> '+esc(d.sell_analysis.summary)+'</p>':'')+
+      ((d.buzz_patterns||[]).slice(0,3).map(p=>'<p style="margin-top:8px"><span class="tag buzz">'+esc(p.pattern)+'</span> '+esc(p.reproduce_recipe||'')+'</p>').join(''))+
+      '</div>'+
+      '<h2>スコア上位投稿</h2><div class="card" style="overflow-x:auto">'+postsTable(posts.slice().sort((a,b)=>(b.buzz_score||0)-(a.buzz_score||0)).slice(0,8))+'</div>';
+  }
+  if(pg==='buzz'){
+    const el=document.getElementById('buzzBody');
+    if(!r)return needData(el);
+    const d=r.data,posts=d.posts||[];
+    const hooks={};posts.forEach(p=>{const t=p.hook?.type||'不明';hooks[t]=(hooks[t]||0)+1});
+    el.innerHTML='<h2>勝ちパターン</h2><div class="card">'+
+      ((d.buzz_patterns||[]).map(p=>
+        '<div class="pattern"><h3>'+esc(p.pattern)+'</h3>'+
+        '<div>'+[p.hook_type,p.framework].filter(Boolean).map(t=>'<span class="tag buzz">'+esc(t)+'</span>').join('')+
+        (p.triggers||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>'+
+        '<div class="recipe"><b>再現レシピ:</b> '+esc(p.reproduce_recipe||'')+'</div>'+
+        '<div class="sub" style="margin-top:6px">根拠: '+((p.evidence||[]).map(esc).join(', '))+'</div></div>'
+      ).join('')||'<div class="empty">パターンなし</div>')+'</div>'+
+      '<h2>フック型の分布</h2><div class="card"><canvas id="hookChart"></canvas></div>'+
+      '<h2>バズスコア順</h2><div class="card" style="overflow-x:auto">'+postsTable(posts.slice().sort((a,b)=>(b.buzz_score||0)-(a.buzz_score||0)))+'</div>';
+    makeChart('hookChart',{type:'bar',data:{labels:Object.keys(hooks),
+      datasets:[{data:Object.values(hooks),backgroundColor:'#3B6EA5'}]},
+      options:{plugins:{legend:{display:false}},scales:{y:{ticks:{precision:0}}}}});
+  }
+  if(pg==='sell'){
+    const el=document.getElementById('sellBody');
+    if(!r)return needData(el);
+    const d=r.data,sa=d.sell_analysis||{};
+    el.innerHTML='<h2>売れの構造</h2><div class="card">'+
+      (sa.summary?'<p style="font-size:15.5px"><span class="mk"><b>'+esc(sa.summary)+'</b></span></p>':'<div class="empty">売れ分析なし(note購入データが未接続の可能性)</div>')+
+      '</div>'+
+      ((sa.sell_patterns||[]).length?'<h2>売れるパターン</h2><div class="card">'+
+        sa.sell_patterns.map(p=>'<div class="pattern sell"><h3>'+esc(p.pattern)+'</h3>'+
+        '<p>'+esc(p.why_it_sells||'')+'</p>'+
+        '<div class="sub" style="margin-top:4px">根拠: '+((p.evidence||[]).map(esc).join(', '))+'</div></div>').join('')+'</div>':'')+
+      '<h2>売れスコア順</h2><div class="card" style="overflow-x:auto">'+
+      postsTable((d.posts||[]).slice().sort((a,b)=>(b.sell_score||0)-(a.sell_score||0)).slice(0,15),'sell')+'</div>';
+  }
+  if(pg==='map'){
+    const el=document.getElementById('mapBody');
+    if(!r)return needData(el);
+    const cm=r.data.category_matrix||[];
+    if(!cm.length)return needData(el);
+    el.innerHTML='<h2>カテゴリ × 反応マトリクス</h2>'+
+      '<p class="sub" style="margin-bottom:10px"><span class="mk">マーカー</span>=未開拓の鉱脈(投稿ゼロ or 高反応×低投稿数)</p>'+
+      '<div class="card" style="overflow-x:auto"><table><thead><tr><th>カテゴリ</th><th>投稿数</th><th>平均ビュー</th><th>ポテンシャル</th><th></th></tr></thead><tbody>'+
+      cm.slice().sort((a,b)=>(b.untapped?1:0)-(a.untapped?1:0)).map(c=>
+        '<tr><td><b>'+(c.untapped?'<span class="mk">'+esc(c.category)+'</span>':esc(c.category))+'</b></td>'+
+        '<td class="mono">'+(c.post_count??'')+'</td><td class="mono">'+(c.avg_views??'')+'</td>'+
+        '<td><span class="tag'+(c.potential==='high'?' untap':'')+'">'+esc(c.potential||'')+'</span></td>'+
+        '<td>'+(c.untapped?'<span class="tag untap">未開拓</span>':'')+'</td></tr>'
+      ).join('')+'</tbody></table></div>'+
+      '<h2>カテゴリ別 平均ビュー</h2><div class="card"><canvas id="catChart"></canvas></div>';
+    makeChart('catChart',{type:'bar',data:{labels:cm.map(c=>c.category),
+      datasets:[{data:cm.map(c=>c.avg_views||0),backgroundColor:cm.map(c=>c.untapped?'#FFE14D':'#3B6EA5')}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false}}}});
+  }
+  if(pg==='prop'){
+    const el=document.getElementById('propBody');
+    if(!r)return needData(el);
+    const props=r.data.proposals||[];
+    if(!props.length)return needData(el);
+    el.innerHTML='<h2>未開拓の投稿案('+props.length+'案)</h2>'+
+      props.map((p,i)=>'<div class="card prop"><h3>'+esc(p.title)+'</h3>'+
+        '<button class="btn sm ghost copybtn" onclick="copyHook('+i+',this)">フックをコピー</button>'+
+        '<div>'+[p.category,p.framework].filter(Boolean).map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+
+        (p.expected?'<span class="tag '+(p.expected==='sell'?'sell':'buzz')+'">'+esc(p.expected)+'</span>':'')+'</div>'+
+        '<div class="hookbox" id="hook'+i+'">'+esc(p.hook_draft||'')+'</div>'+
+        (p.target_pain?'<p class="sub">刺さる悩み: '+esc(p.target_pain)+'</p>':'')+
+        (p.rationale?'<p style="margin-top:6px">'+esc(p.rationale)+'</p>':'')+
+      '</div>').join('');
+  }
+}
+function copyHook(i,btn){
+  const t=document.getElementById('hook'+i).textContent;
+  navigator.clipboard.writeText(t).then(()=>{btn.textContent='コピー済み';setTimeout(()=>btn.textContent='フックをコピー',1500)});
+}
+function kpi(num,lbl){return '<div class="card kpi"><div class="num">'+num+'</div><div class="lbl">'+lbl+'</div></div>'}
+function postsTable(posts,mode){
+  if(!posts.length)return '<div class="empty">投稿なし</div>';
+  return '<table><thead><tr><th>ID</th><th>フック</th><th>型 / 構成</th><th>views</th><th>'+(mode==='sell'?'sell':'buzz')+'</th><th>所見</th></tr></thead><tbody>'+
+    posts.map(p=>'<tr><td class="mono">'+esc(p.id)+'</td>'+
+      '<td style="max-width:260px">'+esc((p.hook?.text||'').slice(0,60))+'</td>'+
+      '<td><span class="tag">'+esc(p.hook?.type||'')+'</span><span class="tag">'+esc(p.body_framework||'')+'</span></td>'+
+      '<td class="mono">'+(p.views??'')+'</td>'+
+      '<td class="mono"><b>'+((mode==='sell'?p.sell_score:p.buzz_score)??'')+'</b></td>'+
+      '<td class="sub" style="max-width:280px">'+esc(p.insight||'')+'</td></tr>').join('')+
+    '</tbody></table>';
+}
+/* ---------- 起動 ---------- */
+show(runs.length?'dash':'import');
+</script>
+</body>
+</html>
